@@ -134,14 +134,45 @@ ggplotly(ggplot(main_longitudinal_df, aes(x=year,y=count,fill=Level)) + geom_col
 
 #### Cyber Security Fundamentals at SCQF Level 4 - Attainment
 
-Cyber Security Fundamentals at SCQF Level 4 - Attainment
 
 **Data source:** [Scottish Qualifications Authority](https://www.sqa.org.uk/sqa/102188.html)
 
 - [Attainment Statistics (December 2022)](https://www.sqa.org.uk/sqa/files_ccc/attainment-statistics-december-2022.xlsx)
 
 
-The data gives the number of Awards, including for the Award in Cyber Security Fundamentals at SCQF Level 4. 
+The data gives the number of Awards in Cyber Security Fundamentals attained at SCQF Level 4. 
+
+Attainment is counted against a year if the award was achieved before August of that year.  That is, for 2022, the award was made between 1 Aug 2021 and 31 July 2022.
+
+### NPAs in Cyber Security - Attainment
+
+```{r}
+
+code_of_interest = "Cyber Security" # Make sure this is how SQA spells it in their files.
+
+df <- read_excel(SQA_awards_filename, sheet="National_Progression_Awards", skip = 2) %>%
+  filter(grepl(code_of_interest,Subject,fixed=TRUE)) %>%
+  pivot_longer(cols = starts_with("Awarded Count "), names_prefix = "Awarded Count ", names_to= "year", values_to = "count") %>%
+  mutate(count = as.numeric(count))
+
+g <- ggplot(df, aes(x=year,y=count,fill=Level)) + theme(plot.title=element_text(size=14,face="bold"),axis.text=element_text(size=12), axis.title=element_text(size=12),strip.text.x = element_text(size = 14))
+
+g + geom_col() + labs(title="NPAs in Cyber Security - Attainment by SCQF level and year") + facet_wrap(~Level) + scale_fill_manual(values=cbPalette) + theme(legend.position = "none")
+  
+```
+
+
+*** 
+
+#### NPAs in Cyber Security - Attainment
+
+
+**Data source:** [Scottish Qualifications Authority](https://www.sqa.org.uk/sqa/102188.html)
+
+- [Attainment Statistics (December 2022)](https://www.sqa.org.uk/sqa/files_ccc/attainment-statistics-december-2022.xlsx)
+
+
+The data gives the number of National Progression Awards in Cyber Security attained at SCQF Levels 4-6. 
 
 Attainment is counted against a year if the award was achieved before August of that year.  That is, for 2022, the award was made between 1 Aug 2021 and 31 July 2022.
 
@@ -192,7 +223,7 @@ ggplotly(ggplot(df, aes(x=year,y=count,fill=type)) + my_theme + geom_col(positio
 - [Attainment Statistics (December 2022)](https://www.sqa.org.uk/sqa/files_ccc/attainment-statistics-december-2022.xlsx)
 
 
-The data gives the number of Highers and Advanced Highers awarded in the years 2018-2022.
+The data gives the number of Highers and Advanced Highers attained in the years 2018-2022.
 
 
 Attainment is counted against a year if the award was achieved before August of that year.  That is, for 2022, the award was made between 1 Aug 2021 and 31 July 2022.
@@ -210,7 +241,7 @@ main_longitudinal_df <- read_excel(teacher_census_filename, sheet="Table 3.9", s
   pivot_longer(cols = everything(), names_to = "year",values_to = "count", values_transform = as.integer) %>%
   mutate(year = substring(year,1,4))
 
-ggplotly(ggplot(main_longitudinal_df, aes(x=year,y=count)) + my_theme + geom_col() + labs(y="Number of teachers") + scale_fill_manual(values=cbPalette) + theme(legend.position = "none"))
+ggplotly(ggplot(main_longitudinal_df, aes(x=year,y=count)) + geom_col(fill = cbPalette[1]) + labs(y="Number of teachers") + my_theme + theme(legend.position = "none"))
 
 # could add how many teachers each LA has.
 # - Table 8.9:  Secondary school teachers by main subject taught and local authority, 2022
@@ -231,7 +262,7 @@ From this data source, we use:
 
 Note that this data gives the number of teachers with Computing Studies as their main subject, not all teachers of Computing Studies.
 
-### Computing Students entering Scottish tertiary education by level, 2015/16 to 2020/21
+### Computing Students entering Scottish higher education by level, 2015/16 to 2020/21
 
 ```{r Scottish_college_and_HE_entrants}
 
@@ -283,15 +314,15 @@ ggplotly(ggplot(table_15_totals , aes(x=year,y=Number,fill=Level)) + geom_col() 
 
 ***
 
-#### Computing Students entering Scottish tertiary education by level, 2015/16 to 2020/21
+#### Computing Students entering Scottish higher education by level, 2015/16 to 2020/21
 
 **Data source:** Scottish Funding Council
 
 - [HE Students and Qualifiers at Scottish Institutions 2020-21 - Table 15] (https://www.sfc.ac.uk/publications-statistics/statistical-publications/2022/SFCST052022.aspx)
 
-The data gives the number of students in their first year of studying a computing discipline at Scottish universities and further education colleges.  From 2019-20, the subject code used is "Computing"; before this time, it is "Computer Science".
+The data gives the number of students newly enrolling for a higher education qualification in a computing discipline at Scottish universities and further education colleges.  From 2019-20, the subject code used is "Computing"; before this time, it is "Computer Science".
 
-### Total Computing students in Scottish tertiary education by level, 2015/16 to 2020/21
+### Total Computing students in Scottish higher education by level, 2015/16 to 2020/21
 
 ```{r Scottish_college_and_HE_students}
 
@@ -337,20 +368,22 @@ table_10a_totals$Level <- factor(table_10a_totals$Level, levels=c("Postgraduate"
 
 ggplotly(ggplot(table_10a_totals , aes(x=year,y=Number,fill=Level)) + geom_col() + labs(x = "academic year", y="Number of students") + my_theme + scale_fill_manual(values=cbPalette))
 
+# :TODO: it might eventually be worth dealing with the SFC College Statistics publication for FE students - some relevant data from 2018 onward
+
 ```
 
 ***
 
-#### Total Computing students in Scottish tertiary education by level, 2015/16 to 2020/21
+#### Total Computing students in Scottish higher education by level, 2015/16 to 2020/21
 
 **Data source:** Scottish Funding Council
 
 - [HE Students and Qualifiers at Scottish Institutions 2020-21 - Table 10a] (https://www.sfc.ac.uk/publications-statistics/statistical-publications/2022/SFCST052022.aspx)
 
-The data gives the total number of students studying a computing discipline at Scottish universities and further education colleges over all years - unlike other statistics based on entrants or qualifiers.  From 2019-20, the subject code used is "Computing"; before this time, it is "Computer Science".
+The data gives the total number of students studying for a higher education qualification in a computing discipline at Scottish universities and further education colleges over all years - unlike other statistics based on entrants or qualifiers.  From 2019-20, the subject code used is "Computing"; before this time, it is "Computer Science".
 
 
-### Percentage of female Computing students in Scottish tertiary education by level, 2015/16 to 2020/21
+### Percentage of female computing students in Scottish higher education by level, 2015/16 to 2020/21
 
 ```{r Scottish_college_and_HE_students_female}
 
@@ -369,23 +402,22 @@ table_10a_female$Level <- factor(table_10a_totals$Level, levels=c("Subdegree", "
 # table 10 is number of total students - other tables give entrants and qualifiers
 ## x axis label doesn't end up well spaced on facet wrapped plots - just omit it.
 
-ggplotly(ggplot(table_10a_female , aes(x=year,y=Number)) + geom_col(position="dodge") + labs(y="Percentage of female students") + my_theme + scale_fill_manual(values=cbPalette) + facet_wrap(~Level,ncol=3))
+ggplotly(ggplot(table_10a_female , aes(x=year,y=Number)) + geom_col(fill=cbPalette[1]) + labs(y="Percentage of female students") + my_theme + scale_fill_manual(values=cbPalette) + facet_wrap(~Level,ncol=3))
 
 ```
 
 ***
 
 
-#### Percentage of female Computing students in Scottish tertiary education by level, 2015/16 to 2020/21
 
 **Data source:** Scottish Funding Council
 
 - [HE Students and Qualifiers at Scottish Institutions 2020-21 - Table 10a] (https://www.sfc.ac.uk/publications-statistics/statistical-publications/2022/SFCST052022.aspx)
 
-The data gives the total number of students studying a computing discipline at Scottish universities and further education colleges over all years - unlike other statistics based on entrants or qualifiers.  From 2019-20, the subject code used is "Computing"; before this time, it is "Computer Science".
+The data gives the total number of students studying for a higher education qualification in a computing discipline at Scottish universities and further education colleges over all years - unlike other statistics based on entrants or qualifiers.  From 2019-20, the subject code used is "Computing"; before this time, it is "Computer Science".
 
 
-### Total Computing students by type of tertiary education institution, 2015/16 to 2020/21
+### Total Computing students by type of higher education institution, 2015/16 to 2020/21
 
 ```{r Scottish_college_and_HE_students_provider_type}
 
@@ -417,16 +449,16 @@ ggplotly(ggplot(table_10b_totals , aes(x=year,y=Number,fill=Provider.type)) + ge
 
 ***
 
-#### Total Computing students by type of tertiary education institution, 2015/16 to 2020/21
+#### Total Computing students by type of higher education institution, 2015/16 to 2020/21
 
 **Data source:** Scottish Funding Council
 
 - [HE Students and Qualifiers at Scottish Institutions 2020-21 - Table 10b] (https://www.sfc.ac.uk/publications-statistics/statistical-publications/2022/SFCST052022.aspx)
 
-The data gives the total number of students studying a computing discipline at Scottish universities and further education colleges over all years - unlike other statistics based on entrants or qualifiers.  From 2019-20, the subject code used is "Computing"; before this time, it is "Computer Science".
+The data gives the total number of students studying for a higher education qualification in a computing discipline at Scottish universities and further education colleges over all years - unlike other statistics based on entrants or qualifiers.  From 2019-20, the subject code used is "Computing"; before this time, it is "Computer Science".
 
 
-### Students completing Scottish Computing tertiary qualifications, 2009/10 to 2020/21
+### Students completing Scottish Computing higher education qualifications, 2009/10 to 2020/21
 
 ```{r Scottish_college_and_HE_qualifiers}
 
@@ -484,13 +516,13 @@ old_table_30 <- old_table_30 %>%
 
 table_30 <- rbind(old_table_30,recent_table_30) 
 
-ggplotly(ggplot(table_30, aes(x=year,y=Number)) + geom_col() + labs(x = "academic year", y="Number qualifying") + my_theme + scale_fill_manual(values=cbPalette))
+ggplotly(ggplot(table_30, aes(x=year,y=Number)) + geom_col(fill=cbPalette[1]) + labs(x = "academic year", y="Number qualifying") + my_theme)
 
 ```
 
 ***
 
-#### Students completing Scottish Computing tertiary qualifications, 2009/10 to 2020/21
+#### Students completing Scottish Computing higher education qualifications, 2009/10 to 2020/21
 
 **Data source:** Scottish Funding Council
 
@@ -589,7 +621,7 @@ HECoS Code |HECoS Label  |
 
 Titles are provided in the data as supplied by the university without further validation; any spelling mistakes will mean the course is not picked up in the search.  The search can potentially return irrelevant results - for instance, food security courses and forensics courses that are completely about chemistry. 
 
-### Students at Scottish universities studying computing disciplines, 2019/20 to 2021/22  
+### Students enrolling at Scottish universities to study computing, 2019/20 to 2021/22  
 
 ```{r Scottish_uni_computing_students}
 
@@ -633,13 +665,14 @@ ggplotly(ggplot(table_49_summary, aes(y=Number,x=Academic.Year))  + geom_bar(aes
 
 ***
 
-#### Students at Scottish universities studying computing disciplines, 2019/20 to 2021/22  
+#### Students enrolling at Scottish universities to study computing, 2019/20 to 2021/22  
 
 **Data source:** [Higher Education Statistics Authority](https://www.hesa.ac.uk/data-and-analysis)
 
 -  [HESA Table 49 - HE student enrolments by HE provider, CAH level 1 subject, CAH level 3 subject, level of study, mode of study and academic year 2019/20 to 2021/22](https://www.hesa.ac.uk/data-and-analysis/students/table-49.csv) 
 
-### Students at Scottish universities studying computing disciplines - by subject, 2021/22
+
+### Students enrolling at Scottish universities to study computing - by subject, 2021/22
 ```{r}
 
 by_subject <- table_49 %>%
@@ -659,7 +692,7 @@ ggplotly(ggplot(by_subject, aes(y=reorder(CAH.level.subject,desc(CAH.level.subje
 
 ***
 
-#### Students at Scottish universities studying computing disciplines - by subject, 2021/22
+#### Students enrolling at Scottish universities to study computing - by subject, 2021/22
 
 **Data source:** [Higher Education Statistics Authority](https://www.hesa.ac.uk/data-and-analysis)
 
@@ -678,7 +711,7 @@ Note that this data source does not use the new HECoS codes that allow cyber sec
 
 
 
-### Students at Scottish universities studying computing disciplines - by institution, 2021/22
+### Students enrolling at Scottish universities to study computing - by institution, 2021/22
 
 ```{r Scottish_uni_computing_by_inst}
 
@@ -694,14 +727,14 @@ ggplotly(ggplot(by_institution, aes(y=reorder(HE.provider,desc(HE.provider)),x=N
 
 ***
 
-#### Students at Scottish universities studying computing disciplines - by institution, 2021/22
+#### Students enrolling at Scottish universities to study computing - by institution, 2021/22
 
 **Data source:** [Higher Education Statistics Authority](https://www.hesa.ac.uk/data-and-analysis) 
 
 -  [HESA Table 49 - HE student enrolments by HE provider, CAH level 1 subject, CAH level 3 subject, level of study, mode of study and academic year 2019/20 to 2021/22](https://www.hesa.ac.uk/data-and-analysis/students/table-49.csv) 
 - [Notes for HESA Table 49](https://www.hesa.ac.uk/data-and-analysis/students/table-49)
 
-### Scots studying Cyber Security at UK universities, 2019/20 to 2021/22
+### Scots qualifying in cyber security at UK universities, 2019/20 to 2021/22
 
 ```{r Scots_studying_cyber}
 code_map <- read.csv(HECOS_CAH_Mapping_filename, skip = 0) 
@@ -724,7 +757,9 @@ table_54 <- read.csv(HESA_table_54_filename, skip = 15) %>%
 
 table_54_HECoS_cyber <- table_54 %>% 
   filter(CAH.level.marker == "HECoS") %>%
-  filter(substring(CAH.level.subject,1,6) %in% cyber_map$HECoS_Code)
+  filter(substring(CAH.level.subject,1,6) %in% cyber_map$HECoS_Code) %>%
+  group_by(CAH.level.subject,Academic.Year) %>%
+  summarise(Number = sum(Number))
 
 
 ggplotly(ggplot(table_54_HECoS_cyber, aes(x=Academic.Year,y=Number)) +  geom_col(aes(fill=CAH.level.subject)) + labs(x = "Academic year",y= "Number of students qualifying", fill="subject") + my_theme + scale_fill_manual(values=cbPalette))
@@ -734,7 +769,7 @@ ggplotly(ggplot(table_54_HECoS_cyber, aes(x=Academic.Year,y=Number)) +  geom_col
 
 ***
 
-#### Scots studying Cyber Security at UK universities, 2019/20 to 2021/22
+#### Scots qualifying in cyber security at UK universities, 2019/20 to 2021/22
 
 **Data source:** [Higher Education Statistics Authority](https://www.hesa.ac.uk/data-and-analysis)
 
@@ -752,7 +787,7 @@ HECoS contains the following codes that we consider to be core cyber security su
 
 ***We assume these numbers are artificially low, as not all courses currently have HECoS codes.***
 
-### Scots studying Computing at UK universities by level, 2019/20 to 2021/22
+### Scots qualifying in computing at UK universities by level, 2019/20 to 2021/22
 
 ```{r Scots_studying_computing}
 computing_map <- code_map %>%
@@ -776,7 +811,7 @@ ggplotly(ggplot(by_study_level, aes(x=Academic.Year,y=Number)) + geom_col(aes(fi
 
 ***
 
-#### Scots studying Computing at UK universities by subject, 2019/20 to 2021/22
+#### Scots qualifying in computing at UK universities by subject, 2019/20 to 2021/22
 
 **Data source:** [Higher Education Statistics Authority](https://www.hesa.ac.uk/data-and-analysis)
 
@@ -788,7 +823,7 @@ Table 54 shows students completing qualifications at UK higher education institu
 
 The HECoS coding system does not specifically identify the set of computing disciplines. We use the mapping between HECoS codes and the CAH system to construct the set. In the CAH system, computing disciplines are all CAH area 11.
 
-### Scots studying Computing at UK universities by subject, 2021/22
+### Scots qualifying in computing at UK universities by subject, 2021/22
 
 ```{r Scots_studying_computing_by_subject}
 table_54_HECoS_computing_by_subject <- table_54_HECoS_computing %>%
@@ -807,7 +842,7 @@ ggplotly(ggplot(table_54_HECoS_computing_by_subject, aes(y = reorder(CAH.level.s
 
 ***
 
-#### Scots studying Computing at UK universities by subject, 2021/22
+#### Scots qualifying in computing at UK universities by subject, 2021/22
 
 **Data source:** [Higher Education Statistics Authority](https://www.hesa.ac.uk/data-and-analysis)
 
@@ -926,6 +961,7 @@ total_Scottish_computing_academics_df <- Scottish_computing_academics_df %>%
   filter(HE.Provider == "Total") 
 
 new = total_Scottish_computing_academics_df %>% filter(grepl("2021/22",Academic.Year)) %>% select(Number) %>% sum() 
+
 old = total_Scottish_computing_academics_df %>% filter(grepl("2014/15",Academic.Year)) %>% select(Number) %>% sum() 
 
 Scottish_cs_pc_growth = ((new-old)/old) * 100
@@ -1009,51 +1045,19 @@ table_26 <- read.csv(HESA_table_26_filename, skip = 20) %>%
   filter(Mode.of.employment != "All") %>%
   filter(Nationality != 'Total')
 
+# these numbers look so high because the totals in other tables are full-time equivalent.
 table_26_Scottish_cs <- table_26 %>%
   filter(Country.of.HE.provider == "Scotland") %>%
   filter(grepl("121", Category)) 
-# these numbers look so high because the totals in other tables are full-time equivalent.
 
-Scottish_cs_total <- table_26_Scottish_cs %>% filter(grepl("2021/22",Academic.Year)) %>% 
-  select(Number)  %>% 
-  sum()
+table_26_Scottish_cs_by_mode <- table_26_Scottish_cs %>% 
+  group_by(Mode.of.employment,Academic.Year) %>%
+  summarise(Number=sum(Number))
 
-Scottish_cs_part_time <- table_26_Scottish_cs %>% 
-  filter(grepl("2021/22",Academic.Year)) %>% 
-  filter(Mode.of.employment == "Part-time") %>%
-  select(Number)  %>% 
-  sum()
- 
-UK_cs_total <- table_26 %>%
-  filter(grepl("121", Category)) %>%
-  filter(grepl("2021/22",Academic.Year)) %>%
-  select(Number)  %>%
-  sum()
-
-UK_cs_part_time <- table_26 %>%  
-  filter(grepl("121", Category))  %>% 
-  filter(grepl("2021/22",Academic.Year)) %>% 
-  filter(Mode.of.employment == "Part-time") %>%
-  select(Number)  %>% 
-  sum()
-
-Scottish_total <- table_26 %>%
-  filter(Country.of.HE.provider == "Scotland") %>%
-  filter(grepl("2021/22",Academic.Year)) %>%
-  select(Number)  %>%
-  sum()
-
-Scottish_part_time <- table_26 %>%
-  filter(Country.of.HE.provider == "Scotland") %>%
-  filter(grepl("2021/22",Academic.Year)) %>%
-  filter(Mode.of.employment == "Part-time") %>%
-  select(Number)  %>%
-  sum()
-
-
-ggplotly(ggplot(table_26_Scottish_cs, aes(x=Academic.Year,y=Number)) + geom_col(aes(fill=Mode.of.employment)) + labs(x = "Academic year",fill="Mode of employment") + my_theme + scale_fill_manual(values=cbPalette))
+ggplotly(ggplot(table_26_Scottish_cs_by_mode, aes(x=Academic.Year,y=Number)) + geom_col(aes(fill=Mode.of.employment)) + labs(x = "Academic year",fill="Mode of employment") + my_theme + scale_fill_manual(values=cbPalette))
 
 ```
+
 
 *** 
 
@@ -1061,7 +1065,58 @@ ggplotly(ggplot(table_26_Scottish_cs, aes(x=Academic.Year,y=Number)) + geom_col(
 
 ```{r}
 
-headline <- paste0(sprintf("%2.0f%%",(Scottish_cs_part_time/Scottish_cs_total)*100), " of Scottish computer science academics work part-time.\n  This compares to ", sprintf("%2.0f%%",(Scottish_part_time/Scottish_total)*100), " for Scottish academics of all disciplines and ", sprintf("%2.0f%%",(UK_cs_part_time/UK_cs_total)*100), " for UK computing academics.\n")
+Scottish_cs_total <- table_26_Scottish_cs %>% 
+  filter(grepl("2021/22",Academic.Year)) %>% 
+  pull(Number) %>% 
+  sum()
+
+Scottish_cs_part_time <- table_26_Scottish_cs %>% 
+  filter(grepl("2021/22",Academic.Year)) %>% 
+  filter(Mode.of.employment == "Part-time") %>%
+  pull(Number) %>% 
+  sum()
+ 
+Scottish_cs_full_time <- Scottish_cs_total - Scottish_cs_part_time
+
+UK_cs_total <- table_26 %>%
+  filter(grepl("121", Category)) %>%
+  filter(grepl("All", Country.of.HE.provider)) %>%
+  filter(grepl("2021/22",Academic.Year)) %>%
+  pull(Number) %>% 
+  sum()
+
+UK_cs_part_time <- table_26 %>%  
+  filter(grepl("121", Category))  %>% 
+  filter(grepl("All", Country.of.HE.provider)) %>%
+  filter(grepl("2021/22",Academic.Year)) %>% 
+  filter(Mode.of.employment == "Part-time") %>%
+  pull(Number) %>% 
+  sum()
+
+Scottish_total <- table_26 %>%
+  filter(Country.of.HE.provider == "Scotland") %>%
+  filter(Category == "Total academic cost centres") %>%
+  filter(grepl("2021/22",Academic.Year)) %>%
+  pull(Number) %>% 
+  sum()
+
+Scottish_part_time <- table_26 %>%
+  filter(Country.of.HE.provider == "Scotland") %>%
+  filter(Category == "Total academic cost centres") %>%
+  filter(grepl("2021/22",Academic.Year)) %>%
+  filter(Mode.of.employment == "Part-time") %>%
+  pull(Number) %>% 
+  sum()
+
+# data from an earlier section
+Scottish_computing_FTE <- total_Scottish_computing_academics_df %>% 
+  filter(grepl("2021/22",Academic.Year)) %>% 
+  pull(Number) %>% 
+  sum()
+
+
+
+headline <- paste0(sprintf("%2.0f%%",(Scottish_cs_part_time/Scottish_cs_total)*100), " of Scottish computer science academics work part-time. This compares to ", sprintf("%2.0f%%",(Scottish_part_time/Scottish_total)*100), " for Scottish academics of all disciplines and ", sprintf("%2.0f%%",(UK_cs_part_time/UK_cs_total)*100), " for UK computing academics.\n  The average part-time academic contributes ", sprintf("%2.0f%%",((Scottish_computing_FTE - Scottish_cs_full_time) / Scottish_cs_part_time) *100), " of an FTE.\n")
 
 knit_print.html(paste0("<p>",headline,"</p>"))
 
@@ -1082,16 +1137,36 @@ The HESA records cover those with contracts of employment or where the higher ed
 Scottish_cs_from_UK <- table_26_Scottish_cs %>%
   filter(grepl("2021/22",Academic.Year)) %>%
   filter(Nationality == "UK") %>%
-  select(Number) %>%
+  pull(Number) %>% 
   sum()
 
+
 #UK_cs_total <- table_26 %>%  filter(grepl("121", Category)) %>% filter(grepl("2021/22",Academic.Year)) %>% select(Number)  %>% sum()
-UK_cs_from_UK <- table_26 %>%  filter(grepl("121", Category))  %>% filter(grepl("2021/22",Academic.Year)) %>% filter(Nationality == "UK") %>%select(Number)  %>% sum()
+UK_cs_from_UK <- table_26 %>%  
+  filter(grepl("121", Category))  %>% 
+  filter(grepl("2021/22",Academic.Year)) %>% 
+  filter(Nationality == "UK") %>%
+  pull(Number) %>% 
+  sum()
 
-Scottish_total <- table_26 %>%  filter(Country.of.HE.provider == "Scotland") %>% filter(grepl("2021/22",Academic.Year)) %>% select(Number)  %>% sum()
-Scottish_from_UK <- table_26 %>%  filter(Country.of.HE.provider == "Scotland") %>% filter(grepl("2021/22",Academic.Year)) %>% filter(Nationality == "UK") %>%select(Number)  %>% sum()
+Scottish_total <- table_26 %>%  
+  filter(Country.of.HE.provider == "Scotland") %>% 
+  filter(grepl("2021/22",Academic.Year)) %>% 
+  pull(Number) %>% 
+  sum()
 
-ggplotly(ggplot(table_26_Scottish_cs, aes(x=Academic.Year,y=Number)) + geom_col(aes(fill=Nationality)) + labs(x = "Academic year",fill="Nationality") + my_theme + scale_fill_manual(values=cbPalette))
+Scottish_from_UK <- table_26 %>%  
+  filter(Country.of.HE.provider == "Scotland") %>% 
+  filter(grepl("2021/22",Academic.Year)) %>% 
+  filter(Nationality == "UK") %>%
+  pull(Number) %>% 
+  sum()
+
+table_26_Scottish_cs_by_nationality <- table_26_Scottish_cs %>% 
+  group_by(Nationality,Academic.Year) %>%
+  summarise(Number=sum(Number))
+
+ggplotly(ggplot(table_26_Scottish_cs_by_nationality, aes(x=Academic.Year,y=Number)) + geom_col(aes(fill=Nationality)) + labs(x = "Academic year",fill="Nationality") + my_theme + scale_fill_manual(values=cbPalette))
 
 
 
@@ -1145,7 +1220,7 @@ totals <- totals %>%
   mutate(Value = as.numeric(Value))
 
 
-ggplotly(ggplot(totals, aes(x=Academic.year,y=Value)) + geom_col() + labs(x = "Academic year",y= "Income (in thousands of pounds)") + my_theme + scale_fill_manual(values=cbPalette)) 
+ggplotly(ggplot(totals, aes(x=Academic.year,y=Value)) + geom_col(fill=cbPalette[1]) + labs(x = "Academic year",y= "Income (in thousands of pounds)") + my_theme)
 
 ```
 
@@ -1157,4 +1232,4 @@ ggplotly(ggplot(totals, aes(x=Academic.year,y=Value)) + geom_col() + labs(x = "A
 
 - [Table 5: Research grants and contracts - breakdown by source of income and HESA cost centre 2015/16 to 2021/22](https://www.hesa.ac.uk/data-and-analysis/finances/table-5)
 
-The cost centre we use for computing disciplines is "121 IT, systems sciences and computer software engineering".
+The cost centre for computing disciplines is "121 IT, systems sciences and computer software engineering".
