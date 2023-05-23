@@ -1,0 +1,151 @@
+---
+title: "Education statistics relevant to Scottish Cyber Resilience"
+author: "Jean Carletta"
+date: "May 2023"
+output: 
+  flexdashboard::flex_dashboard:
+    storyboard: true
+    theme:
+      bg: "#101010"
+      fg: "#ffffff"
+      primary: "#E69F00"
+      base_font:
+        google: Prompt
+      code_font:
+        google: JetBrains Mono
+---
+
+
+```{css}
+
+.sbframe-commentary {
+  width: 500px;
+  color: "#E69F00";
+}
+
+td { font-size: 10px }
+
+
+```
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(plotly)
+library(tidyverse)# cut this down??
+library(readxl)
+library(tidyr) # required for separate functionality
+library(htmlwidgets)
+library(htmltools)
+# Install thematic and un-comment for themed static plots (i.e., ggplot2)
+# thematic::thematic_rmd()
+
+# colorblind-friendly palettes from http://www.cookbook-r.com/Graphs/Colors_%28ggplot2%29/#a-colorblind-friendly-palette -
+# original credit looks like  http://jfly.iam.u-tokyo.ac.jp/color/, but that no longer exists.
+
+# The palette with grey:
+#cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+# The original palette with black:
+cbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+my_theme <- theme(plot.title=element_text(size=14,face="bold"),axis.text=element_text(size=12),axis.text.x = element_text(angle=90), axis.title=element_text(size=12),strip.text.x = element_text(size = 14))
+
+## Most files we have to load directly - something about the web setup means they won't using the URL
+
+SQA_awards_filename <- "./data-sources/attainment-statistics-december-2022.xlsx"
+
+teacher_census_filename <- "./data-sources/Teacher+Census+Supplementary+Statistics+2022.xlsx"
+# possible data we could add: [Post-probationer teacher employment - dashboard](https://scotland.shinyapps.io/sg-post-probationer-employment-dashboard/)
+
+ga_filename = "./data-sources/ga-supplementary-tables-2022-v13.xlsx"
+
+HESQ_filepath <- "./data-sources/SFC-HESQ"
+
+HESQ_2018_filename <- "./data-sources/SFC-HESQ/HESQ_2018-19_Background_Tables.xlsx"
+
+# from https://www.hesa.ac.uk/collection/c22061 covering 2023/24 academic year
+unistats_filepath_2023 <- "./data-sources/unistats-2022-3-c22061/on_2023_05_02_13_16_10/"
+unistats_institution_filename <- paste0(unistats_filepath_2023,"INSTITUTION.csv")
+unistats_course_filename <- paste0(unistats_filepath_2023,"KISCOURSE.csv")
+unistats_aim_filename <- paste0(unistats_filepath_2023,"KISAIM.csv")
+
+HECOS_CAH_Mapping_filename <- "./data-sources/HECoS_CAH_Mappings.csv"
+# HECoS codes relating to cyber security  
+cyber_codes <- c("100376", "100385", "100365") # cyber or networking
+cyber_word_regexp <- "(cyber|security|hacking|forensics|resilience|network)"
+
+# longitudinal data files
+HESA_table_26_filename <-"./data-sources/table-26.csv"
+HESA_table_54_filename <- "./data-sources/table-54.csv"
+
+# data that comes one file per year, so we need to get a directory worth of files to do longitudinal analysis
+
+HESA_table_5_filepath <- "./data-sources/table-5"
+HESA_table_11_filepath <- "./data-sources/table-11"
+HESA_table_49_filepath <-"./data-sources/table-49"
+
+## to check we haven't missed relevant HECOS codes
+#HECOS_codes <- read.csv("~/CRU-statistical-reporting-2023/courses/data-sources/unistats-list-of-HECOS-codes/valid-entries.csv")
+
+#cyber_HECOS <- HECOS_codes %>%
+#  filter(grepl("(cyber|security|forensics)",Label, perl=TRUE, ignore.case = TRUE)) ## this is very coarse. Check whole set by eye!
+
+```
+### Further education computing students
+
+```{r}
+
+college_stats_filepath = "./data-sources/SFC-College-Stats"
+
+
+extract_year <- function (x) {
+  pattern <- "[0-9][0-9]-[0-9][0-9]"
+  m <- regexpr(pattern,x)
+  regmatches(x,m)
+}
+
+sheetname_df <- data.frame(yearname = c("18-19","19-20","20-21","21-22"),sheetname = c("Figure 6","Figure 7","Table 6","Table 6"), skip=c(4,7,6,6))
+
+# The worksheets have a variable number of blank columns at the start, but read_excel discards those - as
+# long as the number of columns in the table and their meaning is always the same, we're fine.
+
+read_college_stats_workbook <- 
+  function (f, range) {
+    df <- read_excel(f, sheet=(sheetname_df %>% filter(yearname == extract_year(f)) %>% pull(sheetname)),skip=(sheetname_df %>% filter(yearname == extract_year(f)) %>% pull(skip)), trim_ws=TRUE) %>% 
+      as.data.frame() %>% 
+      select(range) %>%
+      #select(starts_with(paste("X",(extract_year(f))))) %>%
+      mutate(year=paste0("20",extract_year(f)))
+  }
+
+# :TODO: start again here - problem with column names; need to get just Subject Area is information, only the data for
+# that year even though there's data for 10 years previous and the columns are often in different orders, and then
+# instead of rbind something else to combine into a plottable tablee.
+
+myfiles <- lapply(list.files(path=college_stats_filepath, pattern="*.xlsx", full.names=TRUE), read_college_stats_workbook,range=1:3) 
+
+college_stats <- do.call("rbind", myfiles) 
+
+
+
+
+ggplotly(ggplot(college_stats_table , aes(x=year,y=Number,fill=Level)) + geom_col() + labs(x = "academic year", y="Number of students") + my_theme + scale_fill_manual(values=cbPalette))
+
+  
+```
+
+
+*** 
+
+#### Further education computing students
+
+**Data source:** Scottish Funding Council
+
+- [College statistics - Table 6] (https://www.sfc.ac.uk/publications-statistics/statistical-publications/statistics-schedule/statistical-publication-schedule.aspx)
+
+
+The data is for the subject area "Information Technology and Information". Subject area names have changed slightly over the course of the data.
+
+
+
+
