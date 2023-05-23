@@ -516,7 +516,8 @@ old_table_30 <- old_table_30 %>%
 
 table_30 <- rbind(old_table_30,recent_table_30) 
 
-ggplotly(ggplot(table_30, aes(x=year,y=Number)) + geom_col(fill=cbPalette[1]) + labs(x = "academic year", y="Number qualifying") + my_theme)
+ggplotly(ggplot(table_30, aes(x=year,y=as.integer(Number))) + geom_col(fill=cbPalette[1]) + labs(x = "academic year", y="Number qualifying") + my_theme)
+
 
 ```
 
