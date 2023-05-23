@@ -4,9 +4,9 @@ Scottish Cyber Security Education statistics
 
 This Rmarkdown produces a statistical report in storyboard format based on a variety of open data sources, and is designed to be reproducible but not automatic.  The data changes once a year and often involves minor format changes.
 
-TODO:
+To rebuild the website, upload the new html into the docs directory, being sure to rename it "index.html."  
 
-- correct the build process - it's best to build on a local machine and upload the resulting html because it's compute intensive to set up the required R environment.  Currently I'm deleting index.html from the gh-pages branch and uploading the new one, but github also appears to be running an action that tries to build a Jekyll site from the main branch.  Uploading the html to docs/ in main and writing an action to copy that over would be better.
+TODO:
 
 - code rationalisation to make it easier to change later, like defining functions to reduce repetition
 
