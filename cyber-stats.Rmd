@@ -622,7 +622,7 @@ HECoS Code |HECoS Label  |
 
 Titles are provided in the data as supplied by the university without further validation; any spelling mistakes will mean the course is not picked up in the search.  The search can potentially return irrelevant results - for instance, food security courses and forensics courses that are completely about chemistry. 
 
-### Students enrolling at Scottish universities to study computing, 2019/20 to 2021/22  
+### Computing students enrolled at Scottish universities, 2019/20 to 2021/22  
 
 ```{r Scottish_uni_computing_students}
 
@@ -666,14 +666,15 @@ ggplotly(ggplot(table_49_summary, aes(y=Number,x=Academic.Year))  + geom_bar(aes
 
 ***
 
-#### Students enrolling at Scottish universities to study computing, 2019/20 to 2021/22  
+#### Computing students enrolled at Scottish universities, 2019/20 to 2021/22  
 
 **Data source:** [Higher Education Statistics Authority](https://www.hesa.ac.uk/data-and-analysis)
 
 -  [HESA Table 49 - HE student enrolments by HE provider, CAH level 1 subject, CAH level 3 subject, level of study, mode of study and academic year 2019/20 to 2021/22](https://www.hesa.ac.uk/data-and-analysis/students/table-49.csv) 
 
+These counts are for total students - that is, students in any year of their studies.
 
-### Students enrolling at Scottish universities to study computing - by subject, 2021/22
+### Computing students enrolled at Scottish universities - by subject, 2021/22
 ```{r}
 
 by_subject <- table_49 %>%
@@ -693,7 +694,7 @@ ggplotly(ggplot(by_subject, aes(y=reorder(CAH.level.subject,desc(CAH.level.subje
 
 ***
 
-#### Students enrolling at Scottish universities to study computing - by subject, 2021/22
+#### Computing students enrolled at Scottish universities - by subject, 2021/22
 
 **Data source:** [Higher Education Statistics Authority](https://www.hesa.ac.uk/data-and-analysis)
 
@@ -712,7 +713,7 @@ Note that this data source does not use the new HECoS codes that allow cyber sec
 
 
 
-### Students enrolling at Scottish universities to study computing - by institution, 2021/22
+### Computing students enrolled at Scottish universities - by institution, 2021/22
 
 ```{r Scottish_uni_computing_by_inst}
 
@@ -728,7 +729,7 @@ ggplotly(ggplot(by_institution, aes(y=reorder(HE.provider,desc(HE.provider)),x=N
 
 ***
 
-#### Students enrolling at Scottish universities to study computing - by institution, 2021/22
+#### Computing students enrolled at Scottish universities - by institution, 2021/22
 
 **Data source:** [Higher Education Statistics Authority](https://www.hesa.ac.uk/data-and-analysis) 
 
