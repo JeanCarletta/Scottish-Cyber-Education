@@ -8,6 +8,8 @@ To rebuild the website, upload the new html into the docs directory, being sure 
 
 TODO:
 
+- figure out why the github actions are attempting a Jekyll build when its set to build from main branch docs/ and that just contains html.
+
 - code rationalisation to make it easier to change later, like defining functions to reduce repetition
 
 - it may be possible to derive a useful plot from the Scottish Funding Council College Statistics reporting, although the format of their Excel workbook varies so much from year to year that it would be a bit painful to do.
