@@ -14,6 +14,6 @@ TODO:
 
 - we can generate a heat map for where qualifications are delivered as long as the education provider is part of the data in a way where we can get the locations or there is data for where they are within mappable bounds like local authorities, but not all web hosts will put them up.  If this is desired, need to look at why and where might be possible if this is desired.
 
--
+- css might make the plot sizing better but need to know what this will be viewed on
 
 
