@@ -1,0 +1,297 @@
+---
+title: "Attainment Statistics for the NPA in Cyber Security "
+output:
+  html_document:
+    df_print: paged
+author: "Jean Carletta"
+date: "2023-05-04"
+---
+
+Main data sources: 
+
+- [Attainment Statistics (December 2022)](https://www.sqa.org.uk/sqa/files_ccc/attainment-statistics-december-2022.xlsx)
+- [Attainment Statistics, National Progression Award by Education Authority (December 2022)](https://www.sqa.org.uk/sqa/files_ccc/attainment-statistics-december-2022-education-authorities-nationalprogressionawards.xlsx)  
+- [SQA sources - landing page](https://www.sqa.org.uk/sqa/102188.html)
+
+
+This data from the Scottish Qualification Authority (SQA) gives the number of National Progression Awards (NPA) achieved broken down by Education Authority, including those in Cyber Security Scottish Credit and Qualifications Framework (SCQF) levels 4-6.
+
+Attainment is counted against a year if the award was achieved before August of that year.  That is, for 2022, the award was made between 1 Aug 2021 and 31 July 2022.
+
+- Other data sources:
+
+  - [Map boundaries for Local (Education) Authorities](https://martinjc.github.io/UK-GeoJSON/json/sco/topo_lad.json) The names of the authorities have been mapped by hand to the versions of the names used by the SQA. 
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = FALSE, fig.width=10, fig.height=5, results='asis')
+```
+
+```{r}
+
+code_of_interest = "Cyber Security" # Make sure this is how SQA spells it in their files.
+
+main_input_file = "../data-sources/attainment-statistics-december-2022.xlsx"
+LA_input_file = "../data-sources/attainment-statistics-december-2022-education-authorities-nationalprogressionawards.xlsx"
+## We have to store these files locally - something about the web setup means this won't load directly
+
+LA_mapping_boundaries_file = "https://martinjc.github.io/UK-GeoJSON/json/sco/topo_lad.json"
+
+# There are no easy distance metrics to fuzzy match the LA names as given by the NPA to those of the mapping resource.
+name_mapping_file = "../data-sources/geojson-namematching.csv" # constructed by hand
+
+# 0 means exactly 0 students; [c] means suppressed because counts too low; [z] means doesn't apply and it isn't at all clear from the spreadsheet what this means; other numbers are rounded to the nearest 5.  There aren't any [z]'s for Cyber Security so I haven't tracked this down.
+# 
+# The SQA do not offer CSV. The EA workbook has one sheet per educational authority with their data for all NPAs.  
+# 
+
+library(tidyverse)
+library(readxl)
+library(tidyr) # required for separate functionality
+
+# Tidyverse's readxl library can read one sheet at a time from a workbook, specified by sheet name or position (integer).  NB if a file isn't found or is open elsewhere, it will report an incorrect error that the file is a zip file.  
+# 
+# Create a table that has the Education Authority Name, table number,  and the sheet name, presumed to be "EA[X]".
+
+```
+## By SCQF level and year
+```{r}
+npa_longitudinal_df <- read_excel(main_input_file, 11, skip = 2) %>%
+  filter(grepl(code_of_interest,Subject,fixed=TRUE)) %>%
+  pivot_longer(cols = starts_with("Awarded Count "), names_prefix = "Awarded Count ", names_to= "year", values_to = "count") %>%
+  mutate(count = as.numeric(count))
+
+# colorblind-friendly palettes from http://www.cookbook-r.com/Graphs/Colors_%28ggplot2%29/#a-colorblind-friendly-palette -
+# original credit looks like  http://jfly.iam.u-tokyo.ac.jp/color/, but that no longer exists.
+
+# The palette with grey:
+#cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+# The original palette with black:
+cbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+g <- ggplot(npa_longitudinal_df, aes(x=year,y=count,fill=Level)) + theme(plot.title=element_text(size=14,face="bold"),axis.text=element_text(size=12), axis.title=element_text(size=12),strip.text.x = element_text(size = 14))
+
+g + geom_col() + labs(title="NPAs in Cyber Security - Attainment by SCQF level and year") + facet_wrap(~Level) + scale_fill_manual(values=cbPalette) + theme(legend.position = "none")
+  
+```
+
+```{r}
+
+# Now the data by Educational Authority.
+
+# First step:  read the first sheet in the file. This has texts that tell us which table is for which Educational Authority. That will give us the sheet names to work with.  Inspect the main processing to make sure it has the format we're expecting - "Table X:" where X is an integer and somewhere after a dash the name of the Educational Authority.
+
+# This takes splitting some fields by delimiter.  Inspect the results in debug mode to make sure it all worked - in future years, there may be unclean data to work around or data format changes.
+
+for_inspection <- read_excel(LA_input_file, 1, col_names = c("eaList"), skip = 2) %>%
+  filter(grepl('Table',eaList)) %>%
+   separate_wider_delim(eaList, delim=":", names=c("table","rest"), too_few = "debug", too_many = "debug") %>%
+   separate_wider_delim(rest, delim="-", names=c("rest","eaName"), too_few = "debug", too_many = "debug")
+
+#summary(for_inspection)
+
+# first sheet lists the Educational Authorities
+cover_sheet <- read_excel(LA_input_file, 1, col_names = c("eaList"), skip = 2) %>%
+  filter(grepl('Table',eaList)) %>%
+  separate_wider_delim(eaList, delim=":", names=c("table","rest")) %>%
+  mutate(table = as.numeric(sub("Table ","",table))) %>%
+  separate_wider_delim(rest, delim="-", names=c("rest","EA.Name")) %>%
+  select(EA.Name,table) %>%
+  mutate(sheetname = paste0("EA",table)) # FRAGILE to changes in naming convention
+
+# Next step - read in all the educational authority sheets and create a single table with number of students per EA per year.  Create versions that filter out just Cyber Security and just the Total rows for comparison.
+
+df <- list()
+
+for (i in seq_along(cover_sheet$sheetname)) {
+    tempdf <- read_excel(LA_input_file, sheet = cover_sheet$sheetname[i], skip = 2) %>%
+      mutate(EA.Name = cover_sheet$EA.Name[i])
+    df <- rbind(df,tempdf)
+}
+
+# get all the names legal with no spaces
+names(df) <- names(df) %>%  make.names()
+
+cyber_df <- df %>%
+    filter(grepl(code_of_interest,Subject)) 
+
+total_df <- df %>%
+    filter(grepl("Total",Subject)) 
+
+cyber_2022_wide <- cyber_df %>% 
+  select(Subject,Level,Awarded.Count.2022,EA.Name) %>%
+  pivot_wider(names_from=c(Level), values_from=Awarded.Count.2022) %>%
+  mutate(awardless = ((SCQF4==0) & (SCQF5==0) & (SCQF6==0)))
+
+```
+
+
+## By Education Authority
+
+```{r}
+total_2022_wide <- total_df %>% 
+  select(Subject,Level,Awarded.Count.2022,EA.Name) %>%
+  mutate(Subject = "Total") %>%
+  pivot_wider(names_from=c(Level), values_from=Awarded.Count.2022) %>%
+  select(-SCQF2,-SCQF3) %>%
+  mutate(awardless = ((SCQF4==0) & (SCQF5==0) & (SCQF6==0)))
+
+no_total_NPAs <- total_2022_wide %>%
+  filter(awardless == TRUE) 
+
+no_cyber_NPAs <- cyber_2022_wide %>%
+  filter(awardless == TRUE)
+
+cat(paste0("Most educational authorities had students attain NPAs at levels 4-6 in at least some subjects in 2022. That means they have at least one school that knows how to teach NPAs and find them attractive. Only ", sprintf("%2.0f", nrow(no_total_NPAs)), " did not. ",   sprintf("%2.0f",nrow(no_cyber_NPAs)), " had no students attain cyber NPAs.\n"))
+
+```
+
+
+```{r}
+
+##took this out, better conveyed in map.
+
+#cat("The following educational authorities did not award any NPAs in Cyber Security in 2022: \n\n")
+
+# We're relying on the alphabetic order of the original.  It's hard to get alphabetic order in R without setting a locale and even then some platforms don't respect it?
+
+# knitr::kable(no_cyber_NPAs$EA.Name)
+
+# It isn't clear whether we should expect students with SCQF4 to then go on to take SCQF5 and so on - I think some schools only offer SCQF6 - so between that and the pandemic, I'm not looking at anything to do with relative numbers in the different levels.
+```
+
+
+
+
+```{r}
+
+# Profile the growth in the NPA in Cyber Security compared to the total growth in NPAs over the years - totalling across levels 4-6. Start from cyber_df and total_df:
+#  
+# - pivot years to long to get them out of the way 
+# - pivot levels to wide (we want to combine them)
+# - make a note of which years have c's, so we can convert to zero and know it doesn't really mean 0
+# - change c's and z's to 0
+# - pivot the years to long again and sum push the levels to wide, add the totals, remove the levels, push the years to wide again.  Then rbind and push the subject to wide.
+
+cyber_EA_by_year <- cyber_df %>%
+  pivot_longer(cols = starts_with("Awarded.Count."), names_prefix = "Awarded.Count.", names_to= "year", values_to = "count") %>%
+  pivot_wider(names_from=Level, values_from=count)%>%
+  mutate(some.SCQF4 = ((SCQF4 !="0") & (!grepl("z",SCQF4)))) %>%
+  mutate(some.SCQF5 = ((SCQF5 !="0") & (!grepl("z",SCQF5)))) %>%
+  mutate(some.SCQF6 = ((SCQF6 !="0") & (!grepl("z",SCQF6)))) %>%
+  mutate(some = some.SCQF5 | some.SCQF5 | some.SCQF6) %>%
+  # get rid of everything uninterpretable, there's a [] in the data, treat as 0
+  mutate(SCQF4 = ifelse(is.na(as.numeric(SCQF4)),"0",SCQF4)) %>%
+  mutate(SCQF5 = ifelse(is.na(as.numeric(SCQF5)),"0",SCQF5)) %>%
+  mutate(SCQF6 = ifelse(is.na(as.numeric(SCQF6)),"0",SCQF6)) %>%
+  mutate(total=as.numeric(SCQF4)+as.numeric(SCQF5)+as.numeric(SCQF6))%>%
+  select(-SCQF4,-SCQF5,-SCQF6, -some.SCQF4, -some.SCQF5, -some.SCQF6) %>%
+  pivot_wider(names_from=year, values_from=c(some,total)) 
+
+total_NPA_EA_by_year <- total_df %>%
+  filter((Level =="SCQF4") |(Level =="SCQF5")| (Level =="SCQF6")) %>%
+  pivot_longer(cols = starts_with("Awarded.Count."), names_prefix = "Awarded.Count.", names_to= "year", values_to = "count") %>%
+  mutate(Subject="Total") %>%
+  pivot_wider(names_from=Level, values_from=count) %>%
+  mutate(some.SCQF4 = ((SCQF4 !="0") & (!grepl("z",SCQF4)))) %>%
+  mutate(some.SCQF5 = ((SCQF5 !="0") & (!grepl("z",SCQF5)))) %>%
+  mutate(some.SCQF6 = ((SCQF6 !="0") & (!grepl("z",SCQF6)))) %>%
+  mutate(some = some.SCQF5 | some.SCQF5 | some.SCQF6) %>%
+  # get rid of everything uninterpretable, there's a [] in the data, treat as 0
+  mutate(SCQF4 = ifelse(is.na(as.numeric(SCQF4)),"0",SCQF4)) %>%
+  mutate(SCQF5 = ifelse(is.na(as.numeric(SCQF5)),"0",SCQF5)) %>%
+  mutate(SCQF6 = ifelse(is.na(as.numeric(SCQF6)),"0",SCQF6)) %>%
+  mutate(total=as.numeric(SCQF4)+as.numeric(SCQF5)+as.numeric(SCQF6)) %>%
+  select(-SCQF4,-SCQF5,-SCQF6, -some.SCQF4, -some.SCQF5, -some.SCQF6) %>%
+  pivot_wider(names_from=year, values_from=c(some,total)) 
+
+
+
+cyber_vs_total_df <- rbind(cyber_EA_by_year,total_NPA_EA_by_year) 
+
+comparison_df_wide <- cyber_vs_total_df %>%
+  select(-some_2021,-some_2020,-some_2019, -total_2021,-total_2020,-total_2019) %>%
+    pivot_wider(names_from=c(Subject), values_from=c(some_2018,total_2018,some_2022,total_2022)) 
+
+```
+
+```{r}
+## Based on https://rstudio.github.io/leaflet/choropleths.html
+
+LAs <- geojsonio::geojson_read(LA_mapping_boundaries_file, what = "sp")
+
+match_df <- read.csv(name_mapping_file)
+
+# add the EA.Name (the version we'll want to use as labels) and the 2022_total_CyberSecurity to the 
+# data in the LAs spatial polygon.  The data is in the data slot - syntax: LAs@data
+
+by <- join_by(LAD13NM==GEOJSON_LA_Name)
+LAs@data <- left_join(LAs@data,match_df, by)
+by <- join_by(NPA_LA_Name==EA.Name)
+LAs@data <- left_join(LAs@data,comparison_df_wide, by)
+# do a data adjustment so we can differentiate no students from at least some (but too small a number to release)
+LAs@data <- LAs@data %>%
+  mutate(total_2022_CS_adjusted_str =
+    ifelse(((LAs@data$`total_2022_Cyber Security` == 0) & LAs@data$`some_2022_Cyber Security`), 
+           "<5", LAs@data$`total_2022_Cyber Security`)) %>%
+  mutate(total_2022_CS_adjusted =
+    ifelse(((LAs@data$`total_2022_Cyber Security` == 0) & LAs@data$`some_2022_Cyber Security`), 
+           1, LAs@data$`total_2022_Cyber Security`))
+  
+
+```
+
+## Total NPAs in Cyber Security by Educational Authority - 2022
+
+```{r}
+library(leaflet)
+library(htmlwidgets)
+library(htmltools)
+
+# :TODO: doesn't render well on smaller devices, is this fixable?
+
+bins <- c(0, 1, 5, 10, 20, 30, 50, Inf)
+pal <- colorBin("YlOrRd", domain = LAs@data$total_2022_CS_adjusted, bins = bins)
+
+labels <- sprintf(
+  "<strong>%s</strong><br/>%s total Cyber NPAs in 2022",
+    LAs@data$NPA_LA_Name,LAs@data$total_2022_CS_adjusted_str
+  ) %>% lapply(htmltools::HTML)
+
+#title = HTML('<h2>Total NPAs in Cyber Security by Educational Authority - 2022</h2>')
+
+leaflet(LAs) %>%
+  #addControl(title, position = "topleft") %>%
+  #fitBounds(-2.55,55.5,-2.7,60.5) %>%
+  # alternative method, less good for different sized screens?
+  setView(-2.65, 58, zoom=6) %>% 
+  ## free version of tiles for viewing the spatial polygon data
+  addTiles() %>%
+  ## if need fancier, get a free version of this?
+  #addProviderTiles("MapBox", options = providerTileOptions(
+  #  id = "mapbox.light",
+  #  accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN'))) %>%
+  addPolygons(
+    fillColor = ~pal(total_2022_CS_adjusted),
+    weight = 2,
+    opacity = 1,
+    color = "white",
+    dashArray = "3",
+    fillOpacity = 0.7,
+    highlightOptions = highlightOptions(
+      weight = 5,
+      color = "#666",
+      dashArray = "",
+      fillOpacity = 0.7,
+      bringToFront = TRUE),
+    label = labels,
+    labelOptions = labelOptions(
+      style = list("font-weight" = "normal", padding = "3px 8px"),
+      textsize = "15px",
+      direction = "auto")) %>%
+  addLegend(pal = pal, values = ~`total_2022_Cyber Security`, opacity = 0.7, title = "Total",
+    position = "bottomright")
+
+# it's possible to define the label format using a function to get not 0-1 but just 0 - but not worth the effort?
+# See ?addLegend
+```
