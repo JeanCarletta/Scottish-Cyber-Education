@@ -52,37 +52,37 @@ my_theme <- theme(plot.title=element_text(size=14,face="bold"),axis.text=element
 
 ## Most files we have to load directly - something about the web setup means they won't using the URL
 
-SQA_awards_filename <- "./data-sources/attainment-statistics-december-2022.xlsx"
+SQA_awards_filename <- "../data-sources/attainment-statistics-december-2022.xlsx"
 
-teacher_census_filename <- "./data-sources/Teacher+Census+Supplementary+Statistics+2022.xlsx"
+teacher_census_filename <- "../data-sources/Teacher+Census+Supplementary+Statistics+2022.xlsx"
 # possible data we could add: [Post-probationer teacher employment - dashboard](https://scotland.shinyapps.io/sg-post-probationer-employment-dashboard/)
 
-ga_filename = "./data-sources/ga-supplementary-tables-2022-v13.xlsx"
+ga_filename = "../data-sources/ga-supplementary-tables-2022-v13.xlsx"
 
-HESQ_filepath <- "./data-sources/SFC-HESQ"
+HESQ_filepath <- "../data-sources/SFC-HESQ"
 
-HESQ_2018_filename <- "./data-sources/SFC-HESQ/HESQ_2018-19_Background_Tables.xlsx"
+HESQ_2018_filename <- "../data-sources/SFC-HESQ/HESQ_2018-19_Background_Tables.xlsx"
 
 # from https://www.hesa.ac.uk/collection/c22061 covering 2023/24 academic year
-unistats_filepath_2023 <- "./data-sources/unistats-2022-3-c22061/on_2023_05_02_13_16_10/"
+unistats_filepath_2023 <- "../data-sources/unistats-2022-3-c22061/on_2023_05_02_13_16_10/"
 unistats_institution_filename <- paste0(unistats_filepath_2023,"INSTITUTION.csv")
 unistats_course_filename <- paste0(unistats_filepath_2023,"KISCOURSE.csv")
 unistats_aim_filename <- paste0(unistats_filepath_2023,"KISAIM.csv")
 
-HECOS_CAH_Mapping_filename <- "./data-sources/HECoS_CAH_Mappings.csv"
+HECOS_CAH_Mapping_filename <- "../data-sources/HECoS_CAH_Mappings.csv"
 # HECoS codes relating to cyber security  
 cyber_codes <- c("100376", "100385", "100365") # cyber or networking
 cyber_word_regexp <- "(cyber|security|hacking|forensics|resilience|network)"
 
 # longitudinal data files
-HESA_table_26_filename <-"./data-sources/table-26.csv"
-HESA_table_54_filename <- "./data-sources/table-54.csv"
+HESA_table_26_filename <-"../data-sources/table-26.csv"
+HESA_table_54_filename <- "../data-sources/table-54.csv"
 
 # data that comes one file per year, so we need to get a directory worth of files to do longitudinal analysis
 
-HESA_table_5_filepath <- "./data-sources/table-5"
-HESA_table_11_filepath <- "./data-sources/table-11"
-HESA_table_49_filepath <-"./data-sources/table-49"
+HESA_table_5_filepath <- "../data-sources/table-5"
+HESA_table_11_filepath <- "../data-sources/table-11"
+HESA_table_49_filepath <-"../data-sources/table-49"
 
 ## to check we haven't missed relevant HECOS codes
 #HECOS_codes <- read.csv("~/CRU-statistical-reporting-2023/courses/data-sources/unistats-list-of-HECOS-codes/valid-entries.csv")
@@ -1145,6 +1145,7 @@ Scottish_cs_from_UK <- table_26_Scottish_cs %>%
 #UK_cs_total <- table_26 %>%  filter(grepl("121", Category)) %>% filter(grepl("2021/22",Academic.Year)) %>% select(Number)  %>% sum()
 UK_cs_from_UK <- table_26 %>%  
   filter(grepl("121", Category))  %>% 
+  filter(Country.of.HE.provider == "All") %>%
   filter(grepl("2021/22",Academic.Year)) %>% 
   filter(Nationality == "UK") %>%
   pull(Number) %>% 
